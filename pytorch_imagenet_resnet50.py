@@ -47,13 +47,14 @@ parser.add_argument('--momentum', type=float, default=0.9,
 parser.add_argument('--wd', type=float, default=0.00005,
                     help='weight decay')
 
-parser.add_argument('--no-cuda', action='store_true', default=False,
-                    help='disables CUDA training')
 parser.add_argument('--seed', type=int, default=42,
                     help='random seed')
+parser.add_argument('--device', default='cpu',
+                    help='Wheter this is running on cpu or gpu')
+parser.add_argument('--num_threads', default=0, help='set number of threads per worker; setting it to 0 will use all the threads available', type=int)
 
 args = parser.parse_args()
-args.cuda = not args.no_cuda and torch.cuda.is_available()
+args.cuda = args.device.find("gpu")!=-1
 
 allreduce_batch_size = args.batch_size * args.batches_per_allreduce
 
@@ -64,6 +65,14 @@ if args.cuda:
     # Horovod: pin GPU to local rank.
     torch.cuda.set_device(hvd.local_rank())
     torch.cuda.manual_seed(args.seed)
+
+if (args.num_threads!=0):
+    torch.set_num_threads(args.num_threads)
+
+if hvd.rank()==0:
+    print("Torch Thread setup: ")
+    print(" Number of threads: ", torch.get_num_threads())
+
 
 cudnn.benchmark = True
 
@@ -87,8 +96,7 @@ log_writer = tensorboardX.SummaryWriter(args.log_dir) if hvd.rank() == 0 else No
 
 
 # Horovod: limit # of CPU threads to be used per worker.
-torch.set_num_threads(4)
-
+#torch.set_num_threads(4)
 kwargs = {'num_workers': 4, 'pin_memory': True} if args.cuda else {}
 train_dataset = \
     datasets.ImageFolder(args.train_dir,

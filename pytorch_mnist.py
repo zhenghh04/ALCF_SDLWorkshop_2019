@@ -27,20 +27,25 @@ parser.add_argument('--fp16-allreduce', action='store_true', default=False,
                     help='use fp16 compression during allreduce')
 parser.add_argument('--device', default='cpu',
                     help='Wheter this is running on cpu or gpu')
-parser.add_argument('--num_threads', default=1, help='set number of threads per worker', type=int)
+parser.add_argument('--num_threads', default=0, help='set number of threads per worker', type=int)
 args = parser.parse_args()
 
 args.cuda = args.device.find("gpu")!=-1
 # Horovod: initialize library.
 hvd.init()
 torch.manual_seed(args.seed)
-
+print("Horovod: I am worker %s of %s." %(hvd.rank(), hvd.size()))
 if args.device.find("gpu")!=-1:
     # Horovod: pin GPU to local rank.
     torch.cuda.set_device(hvd.local_rank())
     torch.cuda.manual_seed(args.seed)
-torch.set_num_threads(args.num_threads)
+if (args.num_threads!=0):
+    torch.set_num_threads(args.num_threads)
 
+if hvd.rank()==0:
+    print("Torch Thread setup: ")
+    print(" Number of threads: ", torch.get_num_threads())
+#    print(" Number of inter_op threads: ", torch.get_num_interop_threads())
 
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.device.find("gpu")!=-1 else {}
 train_dataset = \
