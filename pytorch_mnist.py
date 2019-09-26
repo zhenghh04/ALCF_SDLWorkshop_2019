@@ -49,7 +49,7 @@ if hvd.rank()==0:
 
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.device.find("gpu")!=-1 else {}
 train_dataset = \
-    datasets.MNIST('data-%d' % hvd.rank(), train=True, download=True,
+    datasets.MNIST('/soft/datascience/MNIST-datasets/', train=True, download=False,
                    transform=transforms.Compose([
                        transforms.ToTensor(),
                        transforms.Normalize((0.1307,), (0.3081,))
@@ -61,7 +61,7 @@ train_loader = torch.utils.data.DataLoader(
     train_dataset, batch_size=args.batch_size, sampler=train_sampler, **kwargs)
 
 test_dataset = \
-    datasets.MNIST('data-%d' % hvd.rank(), train=False, transform=transforms.Compose([
+    datasets.MNIST('/soft/datascience/MNIST-datasets', train=False, transform=transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.1307,), (0.3081,))
     ]))

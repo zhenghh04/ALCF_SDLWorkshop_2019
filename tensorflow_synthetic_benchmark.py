@@ -29,11 +29,12 @@ parser.add_argument('--num-iters', type=int, default=10,
 
 parser.add_argument('--eager', action='store_true', default=False,
                     help='enables eager execution')
-parser.add_argument('--no-cuda', action='store_true', default=False,
-                    help='disables CUDA training')
-
+parser.add_argument('--device', default='cpu',
+                    help='Wheter this is running on cpu or gpu')
+parser.add_argument('--num_inter', default=2, help='set number of inter_op_parallelism_threads per worker', type=int)
+parser.add_argument('--num_intra', default=0, help='set number of intra_op_parallelism_threads per worker', type=int)
 args = parser.parse_args()
-args.cuda = not args.no_cuda
+args.cuda = args.device.find("gpu")!=-1
 
 hvd.init()
 
@@ -44,10 +45,8 @@ if args.cuda:
     config.gpu_options.visible_device_list = str(hvd.local_rank())
 else:
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-    config.gpu_options.allow_growth = False
-    config.gpu_options.visible_device_list = ''
-    config.intra_op_parallelism_threads=0
-    config.inter_op_parallelism_threads=2
+    config.intra_op_parallelism_threads=args.num_intra
+    config.inter_op_parallelism_threads=args.num_inter
 if args.eager:
     tf.enable_eager_execution(config)
 

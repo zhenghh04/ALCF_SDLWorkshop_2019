@@ -20,10 +20,20 @@ import horovod.tensorflow as hvd
 import numpy as np
 
 from tensorflow import keras
+import argparse
 
 layers = tf.layers
 
 tf.logging.set_verbosity(tf.logging.INFO)
+parser = argparse.ArgumentParser(description='Keras MNIST Example')
+parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
+                    help='learning rate (default: 0.001)')
+parser.add_argument('--device', default='cpu',
+                    help='Wheter this is running on cpu or gpu')
+parser.add_argument('--num_inter', default=2, help='set number of inter_op_parallelism_threads per worker', type=int)
+parser.add_argument('--num_intra', default=0, help='set number of intra_op_parallelism_threads per worker', type=int)
+
+args = parser.parse_args()
 
 
 def conv_model(feature, target, mode):
@@ -97,7 +107,7 @@ def main(_):
 
     # Download and load MNIST dataset.
     (x_train, y_train), (x_test, y_test) = \
-        keras.datasets.mnist.load_data('MNIST-data-%d' % hvd.rank())
+        keras.datasets.mnist.load_data('/soft/datascience/MNIST-datasets')
 
     # The shape of downloaded data is (-1, 28, 28), hence we need to reshape it
     # into (-1, 784) to feed into our network. Also, need to normalize the
@@ -112,7 +122,7 @@ def main(_):
     predict, loss = conv_model(image, label, tf.estimator.ModeKeys.TRAIN)
 
     # Horovod: adjust learning rate based on number of GPUs.
-    opt = tf.train.AdamOptimizer(0.001 * hvd.size())
+    opt = tf.train.AdamOptimizer(args.lr * hvd.size())
 
     # Horovod: add Horovod Distributed Optimizer.
     opt = hvd.DistributedOptimizer(opt)
@@ -136,8 +146,12 @@ def main(_):
 
     # Horovod: pin GPU to be used to process local rank (one GPU per process)
     config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True
-    config.gpu_options.visible_device_list = str(hvd.local_rank())
+    if args.device.find("gpu")!=-1:
+        config.gpu_options.allow_growth = True
+        config.gpu_options.visible_device_list = str(hvd.local_rank())
+    else:
+        config.intra_op_parallelism_threads = args.num_intra
+        config.inter_op_parallelism_threads = args.num_inter
 
     # Horovod: save checkpoints only on worker 0 to prevent other workers from
     # corrupting them.

@@ -9,25 +9,35 @@ import math
 import tensorflow as tf
 # Horovod: load horovod
 import horovod.keras as hvd
-
+import argparse
 # Horovod: initialize Horovod.
+
+parser = argparse.ArgumentParser(description='Keras MNIST Example')
+parser.add_argument('--batch-size', type=int, default=128, metavar='N',
+                    help='input batch size for training (default: 64)')
+parser.add_argument('--lr', type=float, default=1.0, metavar='LR',
+                    help='learning rate (default: 1.0)')
+parser.add_argument('--device', default='cpu',
+                    help='Wheter this is running on cpu or gpu')
+parser.add_argument('--num_inter', default=2, help='set number of inter_op_parallelism_threads per worker', type=int)
+parser.add_argument('--num_intra', default=0, help='set number of intra_op_parallelism_threads per worker', type=int)
+
+args = parser.parse_args()
+
+
 hvd.init()
 
 # Horovod: pin GPU to be used to process local rank (one GPU per process)
-#config = tf.ConfigProto()
-#config.gpu_options.allow_growth = True
-#config.gpu_options.visible_device_list = str(hvd.local_rank())
-
-# since we are using CPU 
 config = tf.ConfigProto()
-try:
-    config.intra_op_parallelism_threads = int(os.environ['OMP_NUM_THREADS'])
-except:
-    config.intra_op_parallelism_threads = 0
-config.inter_op_parallelism_threads = 2
+if args.device.find("gpu")!=-1:
+config.gpu_options.allow_growth = True
+config.gpu_options.visible_device_list = str(hvd.local_rank())
+else:
+    config.intra_op_parallelism_threads = args.num_intra
+    config.inter_op_parallelism_threads = args.num_inter
 K.set_session(tf.Session(config=config))
 
-batch_size = 128
+batch_size = args.batch-size
 num_classes = 10
 
 # Horovod: adjust number of epochs based on number of GPUs.
@@ -73,7 +83,7 @@ model.add(Dropout(0.5))
 model.add(Dense(num_classes, activation='softmax'))
 
 # Horovod: adjust learning rate based on number of GPUs.
-opt = keras.optimizers.Adadelta(1.0 * hvd.size())
+opt = keras.optimizers.Adadelta(args.lr * hvd.size())
 
 # Horovod: add Horovod Distributed Optimizer.
 opt = hvd.DistributedOptimizer(opt)
