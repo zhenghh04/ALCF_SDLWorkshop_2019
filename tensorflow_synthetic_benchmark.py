@@ -8,6 +8,7 @@ import timeit
 import tensorflow as tf
 import horovod.tensorflow as hvd
 from tensorflow.keras import applications
+from tensorflow.keras import backend as K
 
 # Benchmark settings
 parser = argparse.ArgumentParser(description='TensorFlow Synthetic Benchmark',
@@ -33,6 +34,7 @@ parser.add_argument('--device', default='cpu',
                     help='Wheter this is running on cpu or gpu')
 parser.add_argument('--num_inter', default=2, help='set number of inter_op_parallelism_threads per worker', type=int)
 parser.add_argument('--num_intra', default=0, help='set number of intra_op_parallelism_threads per worker', type=int)
+
 args = parser.parse_args()
 args.cuda = args.device.find("gpu")!=-1
 
@@ -64,7 +66,10 @@ opt = hvd.DistributedOptimizer(opt, compression=compression)
 init = tf.global_variables_initializer()
 bcast_op = hvd.broadcast_global_variables(0)
 
-data = tf.random_uniform([args.batch_size, 224, 224, 3])
+if K.image_data_format()=='channels_first':
+    data = tf.random_uniform([args.batch_size, 3, 224, 224])
+else:
+    data = tf.random_uniform([args.batch_size, 224, 224, 3])
 target = tf.random_uniform([args.batch_size, 1], minval=0, maxval=999, dtype=tf.int64)
 
 
