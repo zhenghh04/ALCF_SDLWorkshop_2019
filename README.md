@@ -1,7 +1,8 @@
 # Examples for Data parallel training 
 
 Author: Huihuo Zheng
-Purpose: ALCF Simulation, Data, and Learning Workshop, 2019
+
+Purpose: ALCF Simulation, Data, and Learning Workshop, 2019 <https://www.alcf.anl.gov/workshops/alcf-simulation-data-and-learning-workshop>
 
 ## List of Examples 
 
