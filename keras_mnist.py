@@ -1,3 +1,4 @@
+#
 from __future__ import print_function
 import keras
 from keras.datasets import mnist
@@ -30,8 +31,8 @@ hvd.init()
 # Horovod: pin GPU to be used to process local rank (one GPU per process)
 config = tf.ConfigProto()
 if args.device.find("gpu")!=-1:
-config.gpu_options.allow_growth = True
-config.gpu_options.visible_device_list = str(hvd.local_rank())
+    config.gpu_options.allow_growth = True
+    config.gpu_options.visible_device_list = str(hvd.local_rank())
 else:
     config.intra_op_parallelism_threads = args.num_intra
     config.inter_op_parallelism_threads = args.num_inter
