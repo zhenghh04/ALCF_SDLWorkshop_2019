@@ -25,7 +25,7 @@ import argparse
 layers = tf.layers
 
 tf.logging.set_verbosity(tf.logging.INFO)
-parser = argparse.ArgumentParser(description='Keras MNIST Example')
+parser = argparse.ArgumentParser(description='Tensorflow MNIST Example')
 parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
                     help='learning rate (default: 0.001)')
 parser.add_argument('--device', default='cpu',
@@ -107,7 +107,7 @@ def main(_):
 
     # Download and load MNIST dataset.
     (x_train, y_train), (x_test, y_test) = \
-        keras.datasets.mnist.load_data('/soft/datascience/MNIST-datasets')
+        keras.datasets.mnist.load_data('/soft/datascience/MNIST-datasets/mnist.npz')
 
     # The shape of downloaded data is (-1, 28, 28), hence we need to reshape it
     # into (-1, 784) to feed into our network. Also, need to normalize the

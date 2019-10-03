@@ -1,8 +1,8 @@
 #!/bin/bash
 #COBALT -n 1 
 #COBALT -t 1:00:00
-#COBALT -q debug-cache-quad --attrs mcdram=cache:numa=quad
-#COBALT -A datascience
+#COBALT -q training --attrs mcdram=cache:numa=quad
+#COBALT -A SDL_Workshop
 
 #submisstion script for running tensorflow_mnist with horovod
 
