@@ -49,7 +49,7 @@ if hvd.rank()==0:
 
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.device.find("gpu")!=-1 else {}
 train_dataset = \
-    datasets.MNIST('/soft/datascience/MNIST-datasets/', train=True, download=False,
+    datasets.MNIST('datasets/', train=True, download=True,
                    transform=transforms.Compose([
                        transforms.ToTensor(),
                        transforms.Normalize((0.1307,), (0.3081,))
